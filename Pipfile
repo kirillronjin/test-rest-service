@@ -1,0 +1,49 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+alembic = "*"
+asyncpg = "*"
+fastapi = "*"
+chardet="*"
+httpx = "*"
+hypercorn = {extras = ["uvloop"], version = "*"}
+orjson = "*"
+psycopg2-binary = "*"
+python-dateutil = "*"
+sqlalchemy = {version="==1.4.45"}
+sqlalchemy2-stubs = "*"
+starlette-prometheus = "*"
+types-python-dateutil = "*"
+yarl = "*"
+aioredis = "*"
+aiofiles= "*"
+aiohttp = {version="==3.8.1"}
+pydantic = {extras=["dotenv"], version="*"}
+python-keycloak = "*"
+pyjwt = "*"
+scripts = "*"
+dependency-injector = "*"
+greenlet = "*"
+uvicorn = "*"
+
+[dev-packages]
+pytest = "*"
+isort = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+pytest-asyncio = "*"
+pylint = "*"
+pytest-mock = "*"
+python-mock = "*"
+pytest-mypy = "*"
+pytest-cov = "*"
+coverage = "*"
+pre-commit = "*"
+pylama = "*"
+
+[requires]
+python_version = "3.10"

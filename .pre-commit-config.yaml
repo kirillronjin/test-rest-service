@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/PyCQA/isort
+    rev: "5.10.1"
+    hooks:
+      - id: isort
+  - repo: https://github.com/psf/black
+    rev: "22.3.0"
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/flake8
+    rev: "4.0.1"
+    hooks:
+      - id: flake8
+        args: [ "--exclude", "*/grpc/*" ]
+  - repo: local
+    hooks:
+      - id: pylama
+        name: pylama
+        language: python
+        entry: pylama
+        args: [ ".", "-o", "pylama.ini" ]
+        pass_filenames: false
+        types:
+          - "python"
+      - id: mypy
+        language: python
+        name: mypy
+        entry: mypy
+        args: [ ".", "--config-file", "mypy.ini" ]
+        pass_filenames: false
+        types:
+          - "python"
+  - repo: https://github.com/PyCQA/pylint
+    rev: v2.10.2
+    hooks:
+      - id: pylint
+        exclude: ^src/tests|^src/alembic
