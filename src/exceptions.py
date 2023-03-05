@@ -7,12 +7,6 @@ class CustomException(Exception):
     status_code: int = status.HTTP_400_BAD_REQUEST
 
 
-class NoTokenProvidedException(CustomException):
-    error_type = "NoTokenProvidedException"
-    reason = "no token provided"
-    status_code = status.HTTP_401_UNAUTHORIZED
-
-
 class EntityAlreadyExistException(CustomException):
     def __init__(self, reason: str = "reason", details: dict = None):
         self.reason = reason

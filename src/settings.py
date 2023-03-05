@@ -1,7 +1,5 @@
 from pydantic import BaseSettings, PostgresDsn
 
-PROTECTED = ["KEYCLOAK_CLIENT_SECRET_KEY", "PG_PASSWORD"]
-
 
 class Settings(BaseSettings):
 
@@ -19,14 +17,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
-
-    def __str__(self):
-        props = self.dict()
-        res = ""
-        for key, value in props.items():
-            v = value if key not in PROTECTED else f"{len(value)} bytes"
-            res += f"\t{key}: {v}\n"
-        return res
 
     def get_migrate_url(self):
         return PostgresDsn.build(

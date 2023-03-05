@@ -6,7 +6,6 @@ from fastapi.responses import ORJSONResponse
 from exceptions import (
     EntitySubordinationException,
     InternalDatabaseException,
-    NoTokenProvidedException,
     PaginationException,
     EntityAlreadyExistException,
     EntityNotFoundException,
@@ -48,7 +47,6 @@ handlers = {
     EntityNotFoundException: exception_handler,
     PaginationException: exception_handler,
     EntityAlreadyExistException: exception_handler,
-    NoTokenProvidedException: exception_handler,
     InternalDatabaseException: exception_handler,
     DatabaseException: exception_handler,
     EntitySubordinationException: exception_handler,

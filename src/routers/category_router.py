@@ -7,15 +7,10 @@ from fastapi import APIRouter, Depends, Query
 from containers import Container
 from enums.type import VehicleType
 from exceptions import (
-    PaginationException,
     EntityNotFoundException, EntitySubordinationException,
 )
 from schemas.category_dao import Category
-from schemas.create_category_schema import CreateCategoryRequest
-from schemas.get_vehicle_schema import VehicleResponse
-from schemas.get_vehicle_telemetry_schema import VehicleTelemetryResponse
-from schemas.get_vehicles_schema import VehiclesResponse
-from schemas.update_vehicle_schema import UpdateVehicleRequest
+from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest
 from services.category_service import CategoryService
 from settings import settings
 from utils.generate_schemas import generate_additional_responses
@@ -96,19 +91,19 @@ async def create_category(
 
 
 @router.patch(
-    "/update/{vehicle_id}",
+    "/{code}",
     responses=generate_additional_responses([]),
 )
 @inject
-async def update_vehicle(
-        vehicle_id: UUID,
-        data_to_update: UpdateVehicleRequest,
+async def update_category(
+        code: str,
+        data: UpdateCategoryRequest,
         service: CategoryService = Depends(Provide[Container.category_service]),
-) -> None:
+) -> Category:
     """
     Метод обновления машины
 
     Модель (схема) запроса (body) - UpdateVehicleRequest
     """
 
-    return await service.update_vehicle(vehicle_id, data_to_update)
+    return await service.update_category(code, data)

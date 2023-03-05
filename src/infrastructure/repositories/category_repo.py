@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from enums.type import VehicleType
 from exceptions import EntityNotFoundException, DatabaseException
 from infrastructure.repositories.db_models import product_model, category_model, category
-from schemas.category_dao import CreateCategoryDAO, Category
+from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO
 from settings import settings
 
 # pylint: disable=C0121
@@ -177,34 +177,32 @@ class CategoryRepository:
             if created_category := result.first():
                 return Category(**created_category)
 
-    async def update_vehicle(self, id: UUID, data_to_update: dict[str, Any]) -> None:
-        pass
-        # """
-        # update values for vehicle in DB
-        # :param token:
-        # :param id:
-        # :param data_to_update: dict with data for update
-        # :return: bool
-        # """
-        #
-        #
-        # data_to_update.update(
-        #     {
-        #         vehicles.c.updated_at: datetime.now(),
-        #         vehicles.c.updated_by: "!",
-        #     }
-        # )
-        #
-        # query = vehicles.update().values(data_to_update).where((vehicles.c.id == id) & (vehicles.c.org_id.is_not(None)))
-        #
-        # async with self._db.begin() as conn:
-        #     result: CursorResult = await conn.execute(query)  # type: ignore
-        #
-        #     if result.rowcount == 0:  # type: ignore
-        #         raise VehicleDoesNotExistException
+    async def update_category(self, data: UpdateCategoryDAO) -> Category:
+        """
+        update values for vehicle in DB
+        :param token:
+        :param id:
+        :param data_to_update: dict with data for update
+        :return: bool
+        """
 
-    async def get_category_id_without_parent_category_by_code(self, parent_category_code: str) -> str:
-        query = select(category.c.id).where(and_(category.c.code == parent_category_code,
+        update_query = category.update().values(data.dict(exclude_none=True)).where((category.c.id == data.id))
+        select_query = select(category).where(category.c.id == data.id)
+
+        async with self._db.begin() as conn:
+            try:
+                await conn.execute(update_query)  # type: ignore
+
+            except IntegrityError as exp:
+                raise DatabaseException(reason=exp.code,
+                                        details={"scenario": "UPDATE"})
+
+            result = await conn.execute(select_query)
+            if created_category := result.first():
+                return Category(**created_category)
+
+    async def get_category_id_without_parent_category_by_code(self, code: str) -> str:
+        query = select(category.c.id).where(and_(category.c.code == code,
                                                  category.c.parent_category_id.is_(None)))
 
         async with self._db.begin() as conn:
@@ -216,7 +214,7 @@ class CategoryRepository:
             if row := result.first():
                 return row[0]
 
-        raise EntityNotFoundException(reason=f"parent category with code {parent_category_code} doesn't found",
+        raise EntityNotFoundException(reason=f"parent category with code {code} doesn't found",
                                       details={"entity_type": "category"})
 
     async def is_category_exist(self, category_code: str) -> bool:
@@ -228,3 +226,18 @@ class CategoryRepository:
                 return True
 
         return False
+
+    async def get_category_id_by_code(self, code: str):
+        query = select(category.c.id).where(category.c.code == code)
+
+        async with self._db.begin() as conn:
+            try:
+                result = await conn.execute(query)
+            except IntegrityError as exc:
+                raise DatabaseException(reason=exc.code, details={"scenario": "READ"})
+
+            if row := result.first():
+                return row[0]
+
+        raise EntityNotFoundException(reason=f"parent category with code {code} doesn't found",
+                                      details={"entity_type": "category"})
