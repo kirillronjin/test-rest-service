@@ -5,9 +5,12 @@ from math import ceil
 from uuid import UUID, uuid4
 
 from enums.type import VehicleType
-from exceptions import NoDataToUpdateException, PaginationException, VehicleDoesNotExistException
-from infrastructure.repositories.vehicle_repo import VehiclesRepository
-from schemas.create_vehicle_schema import CreateVehicleRequest
+from exceptions import PaginationException, \
+    EntitySubordinationException, EntityAlreadyExistException
+from infrastructure.repositories.db_models import category
+from infrastructure.repositories.category_repo import CategoryRepository
+from schemas.category_dao import CreateCategoryDAO, Category
+from schemas.create_category_schema import CreateCategoryRequest
 from schemas.get_vehicle_schema import Vehicle, VehicleResponse, VehicleResponseData
 from schemas.get_vehicle_telemetry_schema import (
     VehicleTelemetry,
@@ -21,12 +24,12 @@ from settings import settings
 LOGGER = logging.getLogger(__name__)
 
 
-class VehiclesService:
+class CategoryService:
     def __init__(
-        self,
-        vehicles_repo: VehiclesRepository,
+            self,
+            category_repo: CategoryRepository,
     ) -> None:
-        self.vehicles_repo = vehicles_repo
+        self.category_repo = category_repo
 
     async def get_vehicle(self, vehicle_id: UUID) -> VehicleResponse:
         """
@@ -36,7 +39,7 @@ class VehiclesService:
         :param vehicle_id: id of vehicle
         :return: data about vehicle
         """
-        vehicle_data = await self.vehicles_repo.get_vehicle(vehicle_id)
+        vehicle_data = await self.category_repo.get_vehicle(vehicle_id)
 
         LOGGER.info(vehicle_data)
         vehicle = Vehicle(**vehicle_data)
@@ -47,11 +50,11 @@ class VehiclesService:
         return vehicle_response
 
     async def get_vehicles(
-        self,
-        page: int,
-        per_page: int,
-        keyword: str,
-        type: list[VehicleType],
+            self,
+            page: int,
+            per_page: int,
+            keyword: str,
+            type: list[VehicleType],
     ) -> VehiclesResponse:
         """
         Method which returns vehicles data using VehiclesResponse schema
@@ -70,9 +73,9 @@ class VehiclesService:
 
         result: list[Vehicle] = []
 
-        vehicles_data = await self.vehicles_repo.get_vehicles(page, per_page, keyword, type)
+        vehicles_data = await self.category_repo.get_vehicles(page, per_page, keyword, type)
 
-        total_items_count = await self.vehicles_repo.get_number_of_vehicles(keyword, type)
+        total_items_count = await self.category_repo.get_number_of_vehicles(keyword, type)
 
         for vehicle_data in vehicles_data:
             LOGGER.info(vehicle_data)
@@ -101,7 +104,7 @@ class VehiclesService:
         :return: Vehicles data
         """
 
-        vehicle_data = await self.vehicles_repo.get_vehicle_data_for_get_telemetry(vehicle_id)
+        vehicle_data = await self.category_repo.get_vehicle_data_for_get_telemetry(vehicle_id)
 
         vehicle_telemetry_data = VehicleTelemetry(**vehicle_data)
 
@@ -113,26 +116,28 @@ class VehiclesService:
 
         return vehicle_response
 
-    async def create_vehicle(self, vehicle_request: CreateVehicleRequest) -> None:
-        vehicle_data = vehicle_request.dict()
+    async def create_category(self, data: CreateCategoryRequest) -> Category:
 
-        vehicle_id = vehicle_data["vehicle_id"]
+        parent_category_id = False
+        if data.parent_category_code:
+            if data.parent_category_code == data.code:
+                raise EntitySubordinationException(reason="a category cannot be a parent of itself")
+            parent_category_id = await self.category_repo.get_category_id_without_parent_category_by_code(data.parent_category_code)
 
-        if portal_vehicle_id := await self.vehicles_repo.is_vehicle_deleted(vehicle_id):
-            return await self.vehicles_repo.update_vehicle_without_org_id(portal_vehicle_id, vehicle_data)
+        if await self.category_repo.is_category_exist(data.code):
+            raise EntityAlreadyExistException(reason=f"category eith code {data.code} is already exists",
+                                              details={"entity_type": "category"})
 
-        vehicle_data.update(
-            {
-                vehicles.c.id: uuid4(),
-                vehicles.c.org_id: uuid4(),
-                vehicles.c.created_at: datetime.now(),
-                vehicles.c.created_by: "1",
-                vehicles.c.updated_at: datetime.now(),
-                vehicles.c.updated_by: "1",
-            }
+        category_data = CreateCategoryDAO(
+            id=uuid4(),
+            code=data.code,
+            name=data.name,
+            description=data.description,
+            parent_category_id=parent_category_id if parent_category_id else None,
         )
 
-        await self.vehicles_repo.create_vehicle(vehicle_data)
+        result = await self.category_repo.create_category(category_data)
+        return result
 
     async def delete_vehicle(self, vehicle_id: UUID) -> None:
         """
@@ -141,7 +146,7 @@ class VehiclesService:
         :param: vehicle_id: id of vehicle
         :return: BaseVehicleResponse
         """
-        await self.vehicles_repo.delete_vehicle(vehicle_id)
+        await self.category_repo.delete_vehicle(vehicle_id)
 
         LOGGER.info(f"vehicle with vehicle_id={vehicle_id} was deleted")
 
@@ -154,6 +159,6 @@ class VehiclesService:
         :param data_to_update: dict with data for update
         """
         if data_to_update_dict := data_to_update.dict(exclude_none=True):
-            await self.vehicles_repo.update_vehicle(id, data_to_update_dict)
+            await self.category_repo.update_vehicle(id, data_to_update_dict)
             return
-        raise NoDataToUpdateException
+

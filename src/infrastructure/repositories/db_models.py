@@ -12,7 +12,7 @@ category = sqlalchemy.Table(
     Column("name", String),
     Column("description", Text),
     Column("parent_category_id", UUID(as_uuid=True), ForeignKey("category.id"), nullable=True),
-    Column("is_hidden", Boolean),
+    Column("is_hidden", Boolean, default=False),
     Column("creation_date", DateTime(timezone=True), server_default=text("timezone('utc', now())"), nullable=False),
     Column("modification_date", DateTime(timezone=True), server_default=text("timezone('utc', now())"), nullable=False),
 )

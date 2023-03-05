@@ -4,23 +4,23 @@ import aiohttp
 from dependency_injector import containers, providers
 
 from database import Database
-from infrastructure.repositories.vehicle_repo import VehiclesRepository
-from services.vehicle_service import VehiclesService
+from infrastructure.repositories.category_repo import CategoryRepository
+from services.category_service import CategoryService
 from settings import settings
 
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
-        modules=["routers.vehicle_router"]
+        modules=["routers.category_router"]
     )
 
     config = providers.Configuration(pydantic_settings=[settings])
 
     db = providers.Singleton(Database, db_url=settings.get_pg_url())
 
-    vehicle_repo = providers.Factory(VehiclesRepository, db=db.provided.engine)
+    category_repo = providers.Factory(CategoryRepository, db=db.provided.engine)
 
-    vehicle_service = providers.Factory(
-        VehiclesService, vehicle_repo
+    category_service = providers.Factory(
+        CategoryService, category_repo
     )
 

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 
-    API_URL_PREFIX: str = "/api/test-rest-service"
+    API_URL_PREFIX: str = "/v1"
 
     PG_HOST: str = "localhost"
     PG_PORT: int = 5432

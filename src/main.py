@@ -3,10 +3,10 @@ from typing import Final
 
 from atom import AtomApp
 from logger import configure as configure_logger
-from routers.vehicle_router import router as vehicle_router
+from routers.category_router import router as vehicle_router
 from settings import settings
 
-LOGGER: Final[logging.Logger] = configure_logger("Fleet-management")
+LOGGER: Final[logging.Logger] = configure_logger("Test-rest-service")
 LOGGER.info(settings)
 
 APP_NAME = "test-rest-service"

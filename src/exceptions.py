@@ -13,24 +13,32 @@ class NoTokenProvidedException(CustomException):
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
-class VehicleAlreadyExistsException(CustomException):
-    error_type = "VehicleAlreadyExistsException"
-    reason = "vehicle with similar vehicle_id is already exists"
-    location = ["vehicle_id"]
-    status_code = status.HTTP_412_PRECONDITION_FAILED
+class EntityAlreadyExistException(CustomException):
+    def __init__(self, reason: str = "reason", details: dict = None):
+        self.reason = reason
+        self.details = details
+
+    error_code = "EntityAlreadyExistException"
+    status_code = status.HTTP_409_CONFLICT
 
 
-class VehicleDoesNotExistException(CustomException):
-    error_type = "VehicleDoesNotExistException"
-    reason = "vehicle doesn't exist"
-    location = ["vehicle_id"]
+class EntityNotFoundException(CustomException):
+    def __init__(self, reason: str = "reason", details: dict = None):
+        self.reason = reason
+        self.details = details
+
+    error_code = "EntityNotFoundException"
     status_code = status.HTTP_404_NOT_FOUND
 
 
-class AuthServiceException(CustomException):
-    error_type = "AuthServiceException"
-    reason = "auth service exception"
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+class EntitySubordinationException(CustomException):
+
+    def __init__(self, reason: str = "reason", details: dict = None):
+        self.reason = reason
+        self.details = details
+
+    error_type = "EntitySubordinationException"
+    status_code = status.HTTP_400_BAD_REQUEST
 
 
 class PaginationException(CustomException):
@@ -40,10 +48,13 @@ class PaginationException(CustomException):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-class NoDataToUpdateException(CustomException):
-    error_type = "NoDataToUpdateException"
-    reason = "no data to update"
-    status_code = status.HTTP_412_PRECONDITION_FAILED
+class DatabaseException(CustomException):
+    def __init__(self, reason: str = "reason", details: dict = None):
+        self.reason = reason
+        self.details = details
+
+    error_type = "DatabaseException"
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class InternalDatabaseException(CustomException):

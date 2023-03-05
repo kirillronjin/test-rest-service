@@ -4,36 +4,25 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import ORJSONResponse
 
 from exceptions import (
-    AuthServiceException,
+    EntitySubordinationException,
     InternalDatabaseException,
-    NoDataToUpdateException,
     NoTokenProvidedException,
     PaginationException,
-    VehicleAlreadyExistsException,
-    VehicleDoesNotExistException,
+    EntityAlreadyExistException,
+    EntityNotFoundException,
+    DatabaseException
 )
 
 
-async def exception_with_location_handler(request, exception) -> ORJSONResponse:  # pylint: disable=W0613
-    detail = {
-        "loc": exception.location,
-        "msg": exception.reason,
-        "type": exception.error_type,
+async def exception_handler(request, exception) -> ORJSONResponse:  # pylint: disable=W0613
+    content = {
+        "code": exception.status_code,
+        "message": exception.reason,
+        "details": exception.details
     }
     return ORJSONResponse(
         status_code=exception.status_code,
-        content={"detail": [detail]},
-    )
-
-
-async def exception_without_location_handler(request, exception) -> ORJSONResponse:  # pylint: disable=W0613
-    detail = {
-        "msg": exception.reason,
-        "type": exception.error_type,
-    }
-    return ORJSONResponse(
-        status_code=exception.status_code,
-        content={"detail": [detail]},
+        content=content,
     )
 
 
@@ -56,11 +45,11 @@ async def validation_exception_handler(request, exception: RequestValidationErro
 
 handlers = {
     RequestValidationError: validation_exception_handler,
-    VehicleDoesNotExistException: exception_with_location_handler,
-    PaginationException: exception_with_location_handler,
-    VehicleAlreadyExistsException: exception_with_location_handler,
-    NoTokenProvidedException: exception_without_location_handler,
-    InternalDatabaseException: exception_without_location_handler,
-    NoDataToUpdateException: exception_without_location_handler,
-    AuthServiceException: exception_without_location_handler,
+    EntityNotFoundException: exception_handler,
+    PaginationException: exception_handler,
+    EntityAlreadyExistException: exception_handler,
+    NoTokenProvidedException: exception_handler,
+    InternalDatabaseException: exception_handler,
+    DatabaseException: exception_handler,
+    EntitySubordinationException: exception_handler,
 }
