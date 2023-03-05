@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 
 from enums.type import VehicleType
 from exceptions import NoDataToUpdateException, PaginationException, VehicleDoesNotExistException
-from infrastructure.repositories.db_models import vehicles
 from infrastructure.repositories.vehicle_repo import VehiclesRepository
 from schemas.create_vehicle_schema import CreateVehicleRequest
 from schemas.get_vehicle_schema import Vehicle, VehicleResponse, VehicleResponseData
