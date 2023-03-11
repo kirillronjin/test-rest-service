@@ -10,7 +10,7 @@ from exceptions import PaginationException, \
     EntitySubordinationException, EntityAlreadyExistException
 from infrastructure.repositories.db_models import category
 from infrastructure.repositories.category_repo import CategoryRepository
-from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO
+from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO, GetCategoryDAO
 from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema
 from settings import settings
 
@@ -29,23 +29,21 @@ class CategoryService:
             page: int,
             per_page: int,
             parameters: GetCategoryParametersSchema,
-    ) -> List[Category]:
+    ) -> List[GetCategoryDAO]:
 
         if page <= 0 or per_page <= 0:
             LOGGER.error(msg="invalid pagination values")
             raise PaginationException
 
-        result: List[Category] = []
+        result: List[GetCategoryDAO] = []
 
         categories_data = await self.category_repo.get_vehicles(page, per_page, parameters)
-
-
 
         total_items_count = await self.category_repo.get_number_of_categories(parameters)
 
         for category_data in categories_data:
             LOGGER.info(category_data)
-            result.append(Category(**category_data))
+            result.append(GetCategoryDAO(**category_data))
 
         return result
 

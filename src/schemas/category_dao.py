@@ -16,12 +16,20 @@ class CreateCategoryDAO(BaseModel):
 
 
 class Category(CreateCategoryDAO):
-    is_hidden: bool = Field(description="field")
+    is_hidden: bool = Field(description="is_hidden")
     creation_date: datetime = Field(description="creation_date")
-    modification_date: datetime = Field(description="creation_date")
+    modification_date: datetime = Field(description="modification_date")
 
 
 class UpdateCategoryDAO(UpdateCategoryRequest):
     id: UUID = Field(description="id")
     parent_category_id: Optional[UUID] = Field(description="parent_category_id")
-    modification_date: datetime = Field(description="datetime")
+    modification_date: datetime = Field(description="modification_date")
+
+
+class GetCategoryDAO(BaseModel):
+    code: str = Field(description="code")
+    name: str = Field(description="name")
+    description: Optional[str] = Field(description="description")
+    parent_category_id: Optional[UUID] = Field(description="parent_category_id")
+    is_hidden: bool = Field(description="is_hidden")

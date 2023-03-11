@@ -11,7 +11,7 @@ from enums.sort_field import SortField
 from exceptions import (
     EntityNotFoundException, EntitySubordinationException, PaginationException,
 )
-from schemas.category_dao import Category
+from schemas.category_dao import Category, GetCategoryDAO
 from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema
 from services.category_service import CategoryService
 from settings import settings
@@ -36,7 +36,7 @@ async def get_categories(
         only_parent: bool = Query(default=False, description="is only parent categories"),
         sort_field: Optional[SortField] = Query(default=None, description="sort field"),
         descending: bool = Query(default=False, description="sort field")
-) -> List[Category]:
+) -> List[GetCategoryDAO]:
     parameters = GetCategoryParametersSchema(
         codes=codes,
         name=name,

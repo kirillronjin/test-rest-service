@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, Set, List
 from uuid import UUID
 
 from sqlalchemy import func, or_, select, and_, null
@@ -8,6 +8,7 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from enums.sort_field import SortField
 from exceptions import EntityNotFoundException, DatabaseException
 from infrastructure.repositories.db_models import product_model, category_model, category
 from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO
@@ -41,9 +42,55 @@ class CategoryRepository:
             .offset((offset_value - 1) * limit_value)
             .limit(limit_value)
         )
-        #
-        # if parameters.name:
-        #     query = query.where(category.c.name.)
+
+        if parameters.codes:
+            query = query.where(category.c.code.in_(parameters.codes))
+
+        if parameters.name:
+            query = query.filter(category.c.name.ilike(f"%{parameters.name}%"))
+
+        if parameters.description:
+            query = query.filter(category.c.description.ilike(f"%{parameters.description}%"))
+
+        if parameters.is_hidden is not None:
+            query = query.where(category.c.is_hidden == parameters.is_hidden)
+
+        if parameters.parent_category_codes:
+            parent_category_ids = []
+            for code in parameters.parent_category_codes:
+                parent_category_ids.append(await self.get_category_id_by_code(code))
+            query = query.where(category.c.parent_category_id.in_(parent_category_ids))
+
+        if parameters.only_parent:
+            parent_ids = await self.get_parent_category_ids()
+            LOGGER.info(f"{parent_ids=}")
+            query = query.where(category.c.id.in_(parent_ids))
+
+        if parameters.sort_field:
+            match parameters.sort_field:
+                case SortField.CODE:
+                    if parameters.descending:
+                        query = query.order_by(category.c.code.desc())
+                    else:
+                        query = query.order_by(category.c.code)
+
+                case SortField.DESCRIPTION:
+                    if parameters.descending:
+                        query = query.order_by(category.c.description.desc())
+                    else:
+                        query = query.order_by(category.c.description)
+
+                case SortField.IS_HIDDEN:
+                    if parameters.descending:
+                        query = query.order_by(category.c.is_hidden.desc())
+                    else:
+                        query = query.order_by(category.c.is_hidden)
+
+                case SortField.NAME:
+                    if parameters.descending:
+                        query = query.order_by(category.c.name.desc())
+                    else:
+                        query = query.order_by(category.c.name)
 
         LOGGER.info(query)
 
@@ -55,6 +102,19 @@ class CategoryRepository:
             categories_data.append(dict(item))
 
         return categories_data
+
+    async def get_parent_category_ids(self):
+        query = select(category.c.parent_category_id)
+        async with self._db.connect() as conn:
+            query_result = await conn.execute(query)
+        result = query_result.mappings().all()
+
+
+        LOGGER.info("-------------------------------------------------------------")
+        set_ids = set(item["parent_category_id"] for item in result)
+        LOGGER.info(set_ids)
+        return set_ids
+
 
     async def get_number_of_categories(self, parameters: GetCategoryParametersSchema) -> int:
         query = (
