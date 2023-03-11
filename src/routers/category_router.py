@@ -11,8 +11,9 @@ from enums.sort_field import SortField
 from exceptions import (
     EntityNotFoundException, EntitySubordinationException, PaginationException,
 )
-from schemas.category_dao import Category, GetCategoryDAO
-from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema
+from schemas.category_dao import Category
+from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema, \
+    GetCategoriesSchema
 from services.category_service import CategoryService
 from settings import settings
 from utils.generate_schemas import generate_additional_responses
@@ -24,9 +25,9 @@ router = APIRouter(prefix=f"{settings.API_URL_PREFIX}/categories", tags=["Catego
 
 @router.get("", responses=generate_additional_responses([PaginationException()]))
 @inject
-async def get_categories(
+async def find_categories(
         service: CategoryService = Depends(Provide[Container.category_service]),
-        page: int = Query(default=1, description="page number"),
+        page: int = Query(default=0, description="page number"),
         per_page: int = Query(default=25, description="number of categories per page"),
         codes: List[str] = Query(default=[], description="number of vehicles per page"),
         name: str = Query(default="", description="name"),
@@ -36,7 +37,7 @@ async def get_categories(
         only_parent: bool = Query(default=False, description="is only parent categories"),
         sort_field: Optional[SortField] = Query(default=None, description="sort field"),
         descending: bool = Query(default=False, description="sort field")
-) -> List[GetCategoryDAO]:
+) -> GetCategoriesSchema:
     parameters = GetCategoryParametersSchema(
         codes=codes,
         name=name,
@@ -47,7 +48,7 @@ async def get_categories(
         sort_field=sort_field,
         descending=descending,
     )
-    return await service.get_categories(page, per_page, parameters)
+    return await service.get_categories(page+1, per_page, parameters)
 
 
 @router.post(

@@ -25,11 +25,3 @@ class UpdateCategoryDAO(UpdateCategoryRequest):
     id: UUID = Field(description="id")
     parent_category_id: Optional[UUID] = Field(description="parent_category_id")
     modification_date: datetime = Field(description="modification_date")
-
-
-class GetCategoryDAO(BaseModel):
-    code: str = Field(description="code")
-    name: str = Field(description="name")
-    description: Optional[str] = Field(description="description")
-    parent_category_id: Optional[UUID] = Field(description="parent_category_id")
-    is_hidden: bool = Field(description="is_hidden")

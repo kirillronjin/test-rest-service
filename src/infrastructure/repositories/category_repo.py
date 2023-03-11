@@ -122,6 +122,55 @@ class CategoryRepository:
             .select_from(category)
         )
 
+        if parameters.codes:
+            query = query.where(category.c.code.in_(parameters.codes))
+
+        if parameters.name:
+            query = query.filter(category.c.name.ilike(f"%{parameters.name}%"))
+
+        if parameters.description:
+            query = query.filter(category.c.description.ilike(f"%{parameters.description}%"))
+
+        if parameters.is_hidden is not None:
+            query = query.where(category.c.is_hidden == parameters.is_hidden)
+
+        if parameters.parent_category_codes:
+            parent_category_ids = []
+            for code in parameters.parent_category_codes:
+                parent_category_ids.append(await self.get_category_id_by_code(code))
+            query = query.where(category.c.parent_category_id.in_(parent_category_ids))
+
+        if parameters.only_parent:
+            parent_ids = await self.get_parent_category_ids()
+            LOGGER.info(f"{parent_ids=}")
+            query = query.where(category.c.id.in_(parent_ids))
+
+        if parameters.sort_field:
+            match parameters.sort_field:
+                case SortField.CODE:
+                    if parameters.descending:
+                        query = query.order_by(category.c.code.desc())
+                    else:
+                        query = query.order_by(category.c.code)
+
+                case SortField.DESCRIPTION:
+                    if parameters.descending:
+                        query = query.order_by(category.c.description.desc())
+                    else:
+                        query = query.order_by(category.c.description)
+
+                case SortField.IS_HIDDEN:
+                    if parameters.descending:
+                        query = query.order_by(category.c.is_hidden.desc())
+                    else:
+                        query = query.order_by(category.c.is_hidden)
+
+                case SortField.NAME:
+                    if parameters.descending:
+                        query = query.order_by(category.c.name.desc())
+                    else:
+                        query = query.order_by(category.c.name)
+
         async with self._db.connect() as conn:
             num_of_rows = await conn.execute(query)
             return int(num_of_rows.scalar())

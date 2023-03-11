@@ -10,8 +10,10 @@ from exceptions import PaginationException, \
     EntitySubordinationException, EntityAlreadyExistException
 from infrastructure.repositories.db_models import category
 from infrastructure.repositories.category_repo import CategoryRepository
-from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO, GetCategoryDAO
-from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema
+from schemas.category_dao import CreateCategoryDAO, Category, UpdateCategoryDAO
+from schemas.category_schema import CreateCategoryRequest, UpdateCategoryRequest, GetCategoryParametersSchema, \
+    GetCategoriesSchema, GetCategoryDAO
+from schemas.page_schema import PageInfo
 from settings import settings
 
 LOGGER = logging.getLogger(__name__)
@@ -29,13 +31,13 @@ class CategoryService:
             page: int,
             per_page: int,
             parameters: GetCategoryParametersSchema,
-    ) -> List[GetCategoryDAO]:
+    ) -> GetCategoriesSchema:
 
-        if page <= 0 or per_page <= 0:
+        if page < 0 or per_page <= 0:
             LOGGER.error(msg="invalid pagination values")
             raise PaginationException
 
-        result: List[GetCategoryDAO] = []
+        categories: List[GetCategoryDAO] = []
 
         categories_data = await self.category_repo.get_vehicles(page, per_page, parameters)
 
@@ -43,9 +45,20 @@ class CategoryService:
 
         for category_data in categories_data:
             LOGGER.info(category_data)
-            result.append(GetCategoryDAO(**category_data))
+            categories.append(GetCategoryDAO(**category_data))
 
-        return result
+        page_info = PageInfo(
+            page_num=page-1,
+            page_size=len(categories),
+            page_total=ceil(total_items_count/per_page),
+            items_count=total_items_count,
+            has_next_page=page < ceil(total_items_count/per_page)-1
+        )
+
+        return GetCategoriesSchema(
+            categories=categories,
+            page_info=page_info
+        )
 
     async def create_category(self, data: CreateCategoryRequest) -> Category:
 
